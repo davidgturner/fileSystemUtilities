@@ -6,16 +6,29 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/manifoldco/promptui"
 )
 
-func removeEmptyNewFolders() {
-
+func yesNo() bool {
+	prompt := promptui.Select{
+		Label: "Select[Yes/No]",
+		Items: []string{"Yes", "No"},
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed %v\n", err)
+	}
+	return result == "Yes"
 }
 
 func main() {
+	removeEmptyNewFolders()
+}
 
-	root := os.Args
-	var directoryPathToWalk string = root[1]
+func removeEmptyNewFolders() {
+
+	var directoryPathToWalk string = os.Args[1]
 	fmt.Println(directoryPathToWalk)
 
 	fileSystem := os.DirFS(directoryPathToWalk)
@@ -38,19 +51,18 @@ func main() {
 				fmt.Println("Found an empty new folder = " + string(info.Name()))
 				fmt.Println("we will need to delete this.")
 				if err != nil {
-					fmt.Println("something went wrong with finding the abspath...")
-					//continue;
+					fmt.Println("something went wrong with finding the abspath...skipping over.")
 				} else {
-					fmt.Println(absPath)
-					os.Remove(absPath)
-					fmt.Println("removed %s", absPath)
+					fmt.Println(fmt.Sprintf("Pending Removal: %v. Remove?: ", absPath))
+					removeNewFolderFlag := yesNo()
+					if removeNewFolderFlag {
+						// os.Remove(absPath)
+						fmt.Println(fmt.Sprintf("Removed: %v", absPath))
+					}
 				}
 			} else {
-				//fmt.Println("something went wrong with finding the abspath...")
-				//fmt.Println(path, info.Size())
 				files, _ := os.ReadDir(absPath)
-
-				fmt.Println("%s : %s", absPath, len(files))
+				fmt.Println(fmt.Sprintf("File Path: %v # of Files: %v", absPath, len(files)))
 			}
 
 			return nil
